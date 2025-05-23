@@ -12,7 +12,7 @@ export default function Vocab() {
   };
 
   return (
-    <View className="flex-1 pb-24">
+    <View className="flex-1">
       <VocabularyList onVocabPress={handleVocabPress} />
     </View>
   );
