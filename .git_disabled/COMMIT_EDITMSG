@@ -1,0 +1,10 @@
+feat: Implement Home Layout with Tab Navigation and Screens
+
+- Added HomeLayout component with tab navigation using expo-router.
+- Integrated icons from lucide-react-native with nativewind styling.
+- Created Course, FYP Soal, Home, Profile, and Vocab screens.
+- Developed CourseList and VocabularyList components for displaying courses and vocabulary.
+- Implemented mock data for courses and vocabulary.
+- Enhanced UI with blur effects and dynamic theming based on color scheme.
+- Added articles and daily vocabulary sections to the HomeScreen.
+- Created reusable components for cards and lists.
