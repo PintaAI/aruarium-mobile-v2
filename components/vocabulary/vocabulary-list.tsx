@@ -1,70 +1,101 @@
-import { ScrollView } from 'react-native';
-import { VocabularyCard, type VocabularyData } from './vocabulary-card';
-
-const mockVocabulary: VocabularyData[] = [
-  {
-    id: '1',
-    word: '안녕하세요',
-    pronunciation: 'annyeonghaseyo',
-    meaning: 'Hello (formal)',
-    example: '안녕하세요, 저는 민수입니다.',
-    exampleMeaning: 'Hello, I am Minsu.',
-    category: 'Greetings',
-    level: 'Beginner',
-    thumbnailUrl: 'https://picsum.photos/800/400?random=5',
-  },
-  {
-    id: '2',
-    word: '감사합니다',
-    pronunciation: 'gamsahamnida',
-    meaning: 'Thank you (formal)',
-    example: '도와주셔서 감사합니다.',
-    exampleMeaning: 'Thank you for helping me.',
-    category: 'Common Phrases',
-    level: 'Beginner',
-    thumbnailUrl: 'https://picsum.photos/800/400?random=6',
-  },
-  {
-    id: '3',
-    word: '사랑해요',
-    pronunciation: 'saranghaeyo',
-    meaning: 'I love you',
-    example: '너무 사랑해요.',
-    exampleMeaning: 'I love you so much.',
-    category: 'Expressions',
-    level: 'Beginner',
-    thumbnailUrl: 'https://picsum.photos/800/400?random=7',
-  },
-  {
-    id: '4',
-    word: '맛있다',
-    pronunciation: 'masitda',
-    meaning: 'Delicious',
-    example: '이 음식이 정말 맛있어요.',
-    exampleMeaning: 'This food is really delicious.',
-    category: 'Food & Dining',
-    level: 'Beginner',
-    thumbnailUrl: 'https://picsum.photos/800/400?random=8',
-  },
-];
+import { ScrollView, ActivityIndicator, View, RefreshControl } from 'react-native';
+import { Text } from '~/components/ui/text';
+import { VocabularyCard } from './vocabulary-card';
+import { useQuery } from '@tanstack/react-query';
+import { getVocabularyCollections, type VocabularyCollection, type VocabularyType } from '~/lib/api/vocabulary';
+import { useState } from 'react';
+import { Button } from '~/components/ui/button';
 
 interface VocabularyListProps {
-  onVocabPress?: (vocabId: string) => void;
+  onVocabPress?: (collectionId: number) => void;
 }
 
 export function VocabularyList({ onVocabPress }: VocabularyListProps) {
+  const [activeType, setActiveType] = useState<VocabularyType | undefined>();
+
+  const { data: collections, isLoading, error, refetch, isRefetching } = useQuery<VocabularyCollection[]>({
+    queryKey: ['vocabularyCollections', activeType],
+    queryFn: () => getVocabularyCollections(activeType)
+  });
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 justify-center items-center p-4">
+        <Text className="text-red-500 mb-2">Failed to load collections</Text>
+        <Text className="text-sm text-foreground/70 text-center">
+          {error instanceof Error ? error.message : 'Network error occurred'}
+        </Text>
+        <Text className="text-xs text-foreground/50 mt-4">
+          Pull down to refresh and try again
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView 
-      className="flex-1  bg-secondary/50 p-6"
-      showsVerticalScrollIndicator={false}
-    >
-      {mockVocabulary.map((vocab) => (
-        <VocabularyCard
-          key={vocab.id}
-          vocabulary={vocab}
-          onPress={onVocabPress}
-        />
-      ))}
-    </ScrollView>
+    <View className="flex-1">
+      <View className="flex-row justify-center gap-2 py-4 px-6 bg-background">
+        <Button
+          variant={activeType === undefined ? "default" : "outline"}
+          onPress={() => setActiveType(undefined)}
+        >
+          <Text className={activeType === undefined ? "text-primary-foreground" : "text-foreground"}>
+            All
+          </Text>
+        </Button>
+        <Button
+          variant={activeType === "WORD" ? "default" : "outline"}
+          onPress={() => setActiveType("WORD")}
+        >
+          <Text className={activeType === "WORD" ? "text-primary-foreground" : "text-foreground"}>
+            Words
+          </Text>
+        </Button>
+        <Button
+          variant={activeType === "SENTENCE" ? "default" : "outline"}
+          onPress={() => setActiveType("SENTENCE")}
+        >
+          <Text className={activeType === "SENTENCE" ? "text-primary-foreground" : "text-foreground"}>
+            Sentences
+          </Text>
+        </Button>
+      </View>
+
+      <ScrollView 
+        className="flex-1 bg-secondary/50 p-6"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor="#007AFF"
+          />
+        }
+      >
+        {collections?.map((collection) => (
+          <VocabularyCard
+            key={collection.id}
+            collection={collection}
+            onPress={onVocabPress}
+          />
+        ))}
+
+        {collections?.length === 0 && (
+          <View className="flex-1 justify-center items-center py-12">
+            <Text className="text-foreground/70">
+              No {activeType?.toLowerCase() ?? 'vocabulary'} collections found
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
