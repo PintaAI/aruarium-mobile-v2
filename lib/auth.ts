@@ -33,139 +33,57 @@ export interface UserInfo {
  * @returns Authentication response with token if successful
  */
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
+  console.log('🔐 Starting mobile authentication...');
+  
   try {
-    // For NextAuth, we need to use their API endpoint structure
-    // First, try using the API route that NextAuth exposes for signing in
-    const response = await fetch('https://pejuangkorea.vercel.app/api/auth/signin/credentials', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...credentials,
-        redirect: false,
-        csrfToken: await getCsrfToken(),
-      }),
-    });
-
-    // If we get a successful response, try to get the session which contains the JWT
-    if (response.ok) {
-      const session = await getSession();
-      
-      if (session) {
-        // Store the token (usually in the session object)
-        const token = session.accessToken || session.token || JSON.stringify(session);
-        await storeToken(token);
-        
-        return {
-          success: true,
-          token,
-        };
-      }
-    }
+    console.log('📡 Connecting to mobile auth endpoint...');
     
-    // If we couldn't get a session, fall back to a more direct approach
-    // This is a simplified version that might work with some NextAuth setups
-    return await loginFallback(credentials);
-  } catch (error) {
-    console.error('Login error:', error);
-    // Try fallback method if the primary method fails
-    return await loginFallback(credentials);
-  }
-}
-
-/**
- * Get CSRF token for NextAuth requests
- */
-async function getCsrfToken(): Promise<string> {
-  try {
-    const response = await fetch('https://pejuangkorea.vercel.app/api/auth/csrf');
-    const data = await response.json();
-    return data.csrfToken || '';
-  } catch (error) {
-    console.error('Error getting CSRF token:', error);
-    return '';
-  }
-}
-
-/**
- * Get session data from NextAuth
- */
-async function getSession(): Promise<any> {
-  try {
-    const response = await fetch('https://pejuangkorea.vercel.app/api/auth/session');
-    if (!response.ok) return null;
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting session:', error);
-    return null;
-  }
-}
-
-/**
- * Fallback login method that tries different approaches
- */
-async function loginFallback(credentials: LoginCredentials): Promise<AuthResponse> {
-  try {
-    // Try using the login API from the web app
-    const response = await fetch('https://pejuangkorea.vercel.app/api/auth/signin', {
+    const response = await fetch('http://192.168.15.34:3000/api/mobile/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(credentials),
-      credentials: 'include',
     });
 
-    if (!response.ok) {
+    console.log(`📊 Auth endpoint response: ${response.status}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Authentication successful');
+      
+      if (data.success && data.token) {
+        await storeToken(data.token);
+        console.log('💾 Token stored successfully');
+        
+        return {
+          success: true,
+          token: data.token,
+        };
+      } else {
+        console.warn('❌ Invalid response format');
+        return {
+          success: false,
+          error: data.error || 'Authentication failed',
+        };
+      }
+    } else {
+      console.warn(`❌ Auth failed with status: ${response.status}`);
+      const errorData = await response.json().catch(() => null);
       return {
         success: false,
-        error: `Login failed with status ${response.status}`,
+        error: errorData?.error || `Login failed with status ${response.status}`,
       };
     }
-
-    // If successful, try to get the session
-    const session = await getSession();
-    
-    if (session) {
-      const token = session.accessToken || session.token || JSON.stringify(session);
-      await storeToken(token);
-      
-      return {
-        success: true,
-        token,
-      };
-    }
-    
-    // =================================================================
-    // IMPORTANT: DEMO/DEVELOPMENT CODE ONLY - REMOVE IN PRODUCTION
-    // =================================================================
-    // For demo/development purposes only, we generate a mock token
-    // when authentication fails. This allows testing the app without
-    // having a working backend authentication system.
-    // 
-    // In a production environment:
-    // 1. Remove this mock token generation
-    // 2. Implement proper error handling and user feedback
-    // 3. Ensure backend API endpoints are correctly configured
-    // =================================================================
-    console.warn('Using mock token for demonstration purposes');
-    const mockToken = `mock_${Date.now()}_${credentials.email}`;
-    await storeToken(mockToken);
-    
-    return {
-      success: true,
-      token: mockToken,
-    };
   } catch (error) {
-    console.error('Login fallback error:', error);
+    console.error('💥 Login error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'An unknown error occurred',
+      error: error instanceof Error ? error.message : 'Network error occurred',
     };
   }
 }
+
 
 /**
  * Store authentication token securely
@@ -237,24 +155,26 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
  */
 export function decodeJWT(token: string): UserInfo | null {
   try {
+    // Check if it's a session-based token (JSON string)
+    if (token.startsWith('{')) {
+      const sessionData = JSON.parse(token);
+      if (sessionData.user) {
+        return {
+          id: sessionData.user.id,
+          email: sessionData.user.email,
+          name: sessionData.user.name,
+          role: sessionData.user.role,
+          picture: sessionData.user.image,
+          ...sessionData.user,
+        };
+      }
+    }
+    
     // For a standard JWT format (header.payload.signature)
     const parts = token.split('.');
     
     // Make sure it's a valid JWT format
     if (parts.length !== 3) {
-      // Handle mock tokens created for development
-      if (token.startsWith('mock_')) {
-        const parts = token.split('_');
-        if (parts.length >= 3) {
-          return {
-            email: parts[2], // Extract email from mock token
-            name: 'Test User',
-            role: 'user',
-            // Add a timestamp from the mock token
-            iat: Math.floor(parseInt(parts[1]) / 1000),
-          };
-        }
-      }
       return null;
     }
     

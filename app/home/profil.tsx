@@ -7,7 +7,7 @@ import { Button } from '~/components/ui/button';
 import { User, Settings, ChevronRight, Bell, Shield, HelpCircle, LogOut } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { logout, getCurrentUser, UserInfo } from '~/lib/auth';
+import { logout, getCurrentUser, UserInfo, getToken } from '~/lib/auth';
 
 const MENU_ITEMS = [
   {
@@ -35,6 +35,7 @@ const MENU_ITEMS = [
 export default function Profile() {
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [rawToken, setRawToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Fetch user information from JWT token
@@ -42,7 +43,9 @@ export default function Profile() {
     async function fetchUserInfo() {
       try {
         const user = await getCurrentUser();
+        const token = await getToken();
         setUserInfo(user);
+        setRawToken(token);
       } catch (error) {
         console.error('Error fetching user info:', error);
       } finally {
@@ -133,6 +136,54 @@ export default function Profile() {
           ))}
         </Card>
         
+        {/* JWT Debug Section */}
+        <Card className="p-4">
+          <Text className="font-medium text-lg mb-3">🔍 JWT Debug Information</Text>
+          
+          {/* Decoded User Info */}
+          <View className="mb-4">
+            <Text className="font-medium text-primary mb-2">Decoded User Info:</Text>
+            <ScrollView horizontal={true}>
+              <Text className="text-xs font-mono bg-muted p-2 rounded">
+                {userInfo ? JSON.stringify(userInfo, null, 2) : 'No user info available'}
+              </Text>
+            </ScrollView>
+          </View>
+          
+          {/* Raw Token */}
+          <View className="mb-4">
+            <Text className="font-medium text-primary mb-2">Raw Token:</Text>
+            <ScrollView horizontal={true}>
+              <Text className="text-xs font-mono bg-muted p-2 rounded">
+                {rawToken ? rawToken.substring(0, 100) + '...' : 'No token available'}
+              </Text>
+            </ScrollView>
+          </View>
+          
+          {/* Token Type */}
+          <View className="mb-4">
+            <Text className="font-medium text-primary mb-2">Token Type:</Text>
+            <Text className="text-sm">
+              {rawToken?.startsWith('{') ? '📄 Session Token (JSON)' : 
+               rawToken?.split('.').length === 3 ? '🔐 JWT Token' : 
+               '❓ Unknown Token Format'}
+            </Text>
+          </View>
+          
+          {/* All User Properties */}
+          {userInfo && (
+            <View>
+              <Text className="font-medium text-primary mb-2">All User Properties:</Text>
+              {Object.entries(userInfo).map(([key, value]) => (
+                <View key={key} className="flex-row mb-1">
+                  <Text className="font-medium text-xs w-20">{key}:</Text>
+                  <Text className="text-xs flex-1">{String(value)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </Card>
+
         {/* Logout Button */}
         <Button 
           variant="destructive" 

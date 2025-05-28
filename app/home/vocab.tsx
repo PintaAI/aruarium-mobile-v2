@@ -1,13 +1,10 @@
 import { View } from 'react-native';
 import { VocabularyList } from '~/components/vocabulary/vocabulary-list';
-import { useRouter } from 'expo-router';
 
 export default function Vocab() {
-  const router = useRouter();
-
   const handleCollectionPress = (collectionId: number) => {
-    // TODO: Navigate to collection detail screen
-    console.log('Navigate to collection:', collectionId);
+    // Simple logging for now - can be extended later for navigation
+    console.log('Collection pressed:', collectionId);
   };
 
   return (
