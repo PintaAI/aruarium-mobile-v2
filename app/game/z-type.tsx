@@ -29,7 +29,6 @@ const PLAYER_VERTICAL_OFFSET_ANDROID = 32;
 const PLAYER_VERTICAL_OFFSET_IOS = 20;
 const { width, height } = Dimensions.get('window');
 
-
 export default function ZTypeGame() {
   // Game state
   const [showStartScreen, setShowStartScreen] = useState<boolean>(true);
@@ -141,13 +140,19 @@ export default function ZTypeGame() {
 
   /**
    * Start game with words selected from StartScreen
+   * Now supports vocabulary source tracking and collection titles
    */
-  const startGame = (words: WordItem[], qty: number) => {
+  const startGame = (words: WordItem[], qty: number, source?: 'api' | 'static', collectionTitle?: string) => {
     const newEntities = initializeEntities(words);
     setEntities(newEntities);
     setShowStartScreen(false);
     setRunning(true);
     setIsRunning(true);
+    
+    // Log game start information for debugging and analytics
+    console.log(`Z-Type game started with ${qty} words from ${source || 'unknown'} source${
+      collectionTitle ? ` (${collectionTitle})` : ''
+    }`);
   };
 
   /**

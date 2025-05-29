@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { fetchWithAuth } from '../auth';
+import { API_BASE_URL } from '../config';
 import {
   ApiResponse,
   VocabularyCollection,
@@ -13,20 +14,8 @@ import {
   VocabularyApiError
 } from './types';
 
-// Base URL configuration for different platforms
-const getBaseUrl = () => {
-  if (__DEV__) {
-    return Platform.select({
-      android: 'http://10.0.2.2:3000',         // Android emulator
-      ios: 'http://192.168.15.34:3000',        // iOS real device
-      default: 'http://localhost:3000'          // iOS simulator
-    });
-  }
-  return 'https://pejuangkorea.vercel.app';   // Production
-};
-
-const BASE_URL = getBaseUrl();
-const API_BASE = `${BASE_URL}/api/mobile/vocabulary`;
+// API endpoint for vocabulary operations
+const API_BASE = `${API_BASE_URL}/api/mobile/vocabulary`;
 
 /**
  * Custom error class for vocabulary API errors

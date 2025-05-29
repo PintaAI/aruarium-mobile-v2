@@ -4,19 +4,21 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { useGameStore } from '~/lib/game/z-type/store/gameStore';
 import { GAME_SPEEDS, getRandomWords, WordItem } from '~/lib/game/word-constant';
+import WordSelector from './WordSelector';
 import * as LucideIcons from 'lucide-react-native';
 import { iconWithClassName } from '~/lib/icons/iconWithClassName';
 
 interface StartScreenProps {
   iconName?: string;
   title: string;
-  onPlay: (words: WordItem[], wordQuantity: number) => void;
+  onPlay: (words: WordItem[], wordQuantity: number, source?: 'api' | 'static', collectionTitle?: string) => void;
   onExit: () => void;
 }
 
 export default function StartScreen({ iconName, title, onPlay, onExit }: StartScreenProps) {
   const { setLevel } = useGameStore();
   const [modalVisible, setModalVisible] = useState(false);
+  const [wordSelectorVisible, setWordSelectorVisible] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(1);
 
   // Level options from GAME_SPEEDS constant
@@ -32,12 +34,22 @@ export default function StartScreen({ iconName, title, onPlay, onExit }: StartSc
   };
 
   const handlePlay = () => {
+    setLevel(selectedLevel);
+    setWordSelectorVisible(true);
+  };
+
+  const handleUseStaticWords = () => {
     // Get the default word quantity for selected level
     const quantity = defaultWordQuantities[selectedLevel as keyof typeof defaultWordQuantities];
     // Get random words based on quantity
     const randomWords = getRandomWords(quantity);
-    setLevel(selectedLevel);
-    onPlay(randomWords, quantity);
+    setWordSelectorVisible(false);
+    onPlay(randomWords, quantity, 'static');
+  };
+
+  const handleWordsSelected = (words: WordItem[], source: 'api' | 'static', collectionTitle?: string) => {
+    setWordSelectorVisible(false);
+    onPlay(words, words.length, source, collectionTitle);
   };
 
   const handleOpenOptions = () => {
@@ -93,6 +105,15 @@ export default function StartScreen({ iconName, title, onPlay, onExit }: StartSc
           <Text className="text-destructive-foreground text-lg font-bold">Exit</Text>
         </Button>
       </View>
+
+      {/* Word Selector Modal */}
+      <WordSelector
+        isVisible={wordSelectorVisible}
+        selectedLevel={selectedLevel}
+        onWordsSelected={handleWordsSelected}
+        onUseStaticWords={handleUseStaticWords}
+        onClose={() => setWordSelectorVisible(false)}
+      />
 
       {/* Options Modal */}
       <Modal

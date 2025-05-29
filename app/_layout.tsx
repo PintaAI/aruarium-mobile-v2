@@ -11,6 +11,7 @@ import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { PortalHost } from '@rn-primitives/portal';
 import { ThemeToggle } from '~/components/ThemeToggle';
+import { EnvironmentIndicator } from '~/components/EnvironmentIndicator';
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 
 const LIGHT_THEME: Theme = {
@@ -88,6 +89,7 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+      <EnvironmentIndicator />
       <PortalHost />
       </ThemeProvider>
     </QueryClientProvider>

@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL } from './config';
 
 // Storage keys
 const TOKEN_KEY = 'auth_token';
@@ -38,7 +39,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   try {
     console.log('📡 Connecting to mobile auth endpoint...');
     
-    const response = await fetch('http://192.168.15.34:3000/api/mobile/auth/login', {
+    const response = await fetch(`${API_BASE_URL}/api/mobile/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
