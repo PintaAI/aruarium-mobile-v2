@@ -2,30 +2,28 @@ import React from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Card, CardContent} from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { router } from 'expo-router';
 
 export default function FlashcardGame() {
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 p-6">
-        <Card className="w-full rounded-2xl mb-4">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">Flashcard Game</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <View className="items-center p-4">
-              <Text className="text-lg mb-6 text-center">
-                This is a placeholder for the Flashcard game.
+      <View className="flex-1 justify-center p-4">
+        <Card className="w-full rounded-2xl">
+          <CardContent className="items-center p-4 gap-4">
+            <View className="items-center gap-2">
+              <Text className="text-3xl font-bold text-primary">Segera Hadir!</Text>
+              <Text className="text-muted-foreground text-center">
+                Fitur flashcard sedang dalam pengembangan dan akan segera tersedia untuk membantumu belajar kosakata baru.
               </Text>
-              <Button 
-                onPress={() => router.back()}
-                className="px-8"
-              >
-                <Text className="text-primary-foreground font-bold">Return to Menu</Text>
-              </Button>
             </View>
+            <Button 
+              onPress={() => router.back()}
+              className="w-full"
+            >
+              <Text className="text-primary-foreground font-bold">Kembali</Text>
+            </Button>
           </CardContent>
         </Card>
       </View>

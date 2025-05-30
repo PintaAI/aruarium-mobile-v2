@@ -1,7 +1,6 @@
 import { View, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { ThemeToggle } from '~/components/ThemeToggle';
-import { Avatar } from '~/components/ui/avatar';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { User, Settings, ChevronRight, Bell, Shield, HelpCircle, LogOut } from 'lucide-react-native';
@@ -69,7 +68,7 @@ export default function Profile() {
   // Get appropriate display values from user info
   const displayName = userInfo?.name || userInfo?.email?.split('@')[0] || 'User';
   const displayEmail = userInfo?.email || 'No email available';
-  const profileImage = userInfo?.picture || 'https://github.com/shadcn.png';
+  const profileImage = userInfo?.image || 'https://github.com/shadcn.png';
   
   if (loading) {
     return (
@@ -81,7 +80,10 @@ export default function Profile() {
   }
   
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView 
+      className="flex-1 bg-background"
+      contentContainerStyle={{ paddingBottom: 120 }}
+    >
       {/* Profile Header */}
       <View className="items-center pt-8 pb-6 gap-3 bg-card">
         <View className="w-24 h-24 rounded-full overflow-hidden">

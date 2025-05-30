@@ -33,7 +33,7 @@ export default function Index() {
 
   // Use string casting to fix TypeScript error with path types
   if (authenticated) {
-    return <Redirect href="/home/home" />;
+    return <Redirect href="/home" />;
   } else {
     return <Redirect href={"/auth/login" as any} />;
   }

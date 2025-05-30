@@ -21,7 +21,7 @@ export interface UserInfo {
   email?: string;
   name?: string;
   role?: string;
-  picture?: string;
+  image?: string;
   sub?: string; // JWT subject field (usually contains user ID)
   exp?: number; // Expiration timestamp
   iat?: number; // Issued at timestamp
@@ -165,7 +165,7 @@ export function decodeJWT(token: string): UserInfo | null {
           email: sessionData.user.email,
           name: sessionData.user.name,
           role: sessionData.user.role,
-          picture: sessionData.user.image,
+          image: sessionData.user.image,
           ...sessionData.user,
         };
       }

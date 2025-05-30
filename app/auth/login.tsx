@@ -56,7 +56,7 @@ export default function LoginScreen() {
       
       if (response.success && response.token) {
         // Navigate to home screen after successful login
-        router.replace('/home/home');
+        router.replace('/home');
       } else {
         Alert.alert(
           'Login Failed',

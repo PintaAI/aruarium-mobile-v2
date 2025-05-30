@@ -12,7 +12,6 @@ import GameInput from '~/components/game/GameInput';
 import GameHUD from '~/components/game/GameHUD';
 import StartScreen from '~/components/game/StartScreen';
 import GameOverScreen from '~/components/game/GameOverScreen';
-import Laser from '~/components/game/Laser';
 
 /**
  * Z-Type Game - Type words as they fall from the top of the screen
@@ -256,20 +255,6 @@ export default function ZTypeGame() {
               
               {/* Game HUD for score and stats */}
               {running && <GameHUD />}
-              
-              {/* Laser effect connecting player to focused word */}
-              {running && (
-                <Laser 
-                  gameEngineRef={gameEngineRef} 
-                  entities={entities}
-                  startOffset={-5}
-                  endOffset={30}
-                  startXOffset={6}
-                  endXOffset={50}
-                  laserDuration={150}
-                  animationDuration={50}
-                />
-              )}
             </View>
             
             {/* Game input for typing words */}

@@ -1,7 +1,7 @@
 {
   "expo": {
     "jsEngine": "hermes",
-    "name": "z-type",
+    "name": "pejuangkorea",
     "slug": "z-type",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,21 +11,23 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "resizeMode": "cover",
+      "backgroundColor": "#1a1a1a"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rorez.pejuangkorea"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.rorez.pejuangkorea"
+      "package": "com.rorez.pejuangkorea",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +46,9 @@
       "eas": {
         "projectId": "8c350b18-268a-4dc5-8644-635f1481f52f"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8c350b18-268a-4dc5-8644-635f1481f52f"
     }
   }
 }

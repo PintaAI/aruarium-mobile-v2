@@ -1,66 +1,48 @@
-import { ScrollView } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '~/components/ui/text';
+import { Card } from '~/components/ui/card';
 import { CourseCard, type CourseData } from './course-card';
-
-const mockCourses: CourseData[] = [
-  {
-    id: '1',
-    title: 'Korean Alphabet (한글)',
-    description: 'Master Hangul, the Korean writing system. Learn to read and write Korean characters with proper pronunciation.',
-    level: 'Beginner',
-    duration: '2 weeks',
-    totalLessons: 14,
-    completedLessons: 0,
-    thumbnailUrl: 'https://picsum.photos/800/400?random=1',
-  },
-  {
-    id: '2',
-    title: 'Basic Conversations',
-    description: 'Learn essential Korean phrases and vocabulary for everyday conversations. Perfect for beginners.',
-    level: 'Beginner',
-    duration: '4 weeks',
-    totalLessons: 20,
-    completedLessons: 0,
-    thumbnailUrl: 'https://picsum.photos/800/400?random=2',
-  },
-  {
-    id: '3',
-    title: 'Grammar Fundamentals',
-    description: 'Understanding Korean sentence structure and basic grammar patterns. Build a strong foundation.',
-    level: 'Intermediate',
-    duration: '6 weeks',
-    totalLessons: 24,
-    completedLessons: 0,
-    thumbnailUrl: 'https://picsum.photos/800/400?random=3',
-  },
-  {
-    id: '4',
-    title: 'Korean Culture & Customs',
-    description: 'Dive into Korean culture, traditions, and social etiquette while improving your language skills.',
-    level: 'Intermediate',
-    duration: '3 weeks',
-    totalLessons: 15,
-    completedLessons: 0,
-    thumbnailUrl: 'https://picsum.photos/800/400?random=4',
-  },
-];
 
 interface CourseListProps {
   onCoursePress?: (courseId: string) => void;
+  courses: CourseData[];
+  loading: boolean; // loading is now a prop
+  error: string | null; // error is now a prop
 }
 
-export function CourseList({ onCoursePress }: CourseListProps) {
+export function CourseList({
+  onCoursePress,
+  courses,
+  loading,
+  error,
+}: CourseListProps) {
+  // Loading and error states are now handled by the parent component (Course.tsx)
+  // Data fetching logic is also moved to the parent component
+
+  // The component now directly renders based on the passed props
+  if (courses.length === 0 && !loading && !error) {
+    return (
+      <View className="flex-1 items-center justify-center p-6">
+        <Card className="p-4 bg-background w-full">
+          <Text className="text-foreground/60 text-center text-lg">
+            No courses available at the moment.
+          </Text>
+        </Card>
+      </View>
+    );
+  }
+
+  // Render individual course cards
+  // The ScrollView will be in the parent component
   return (
-    <ScrollView 
-      className="flex-1 bg-accent/50 p-6"
-      showsVerticalScrollIndicator={false}
-    >
-      {mockCourses.map((course) => (
+    <View className="gap-4">
+      {courses.map((course) => (
         <CourseCard
           key={course.id}
           course={course}
           onPress={onCoursePress}
         />
       ))}
-    </ScrollView>
+    </View>
   );
 }

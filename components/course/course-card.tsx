@@ -7,7 +7,7 @@ export interface CourseData {
   title: string;
   description: string;
   level: string;
-  duration: string;
+  duration?: string; // Made duration optional
   totalLessons: number;
   completedLessons: number;
   thumbnailUrl: string;
@@ -39,8 +39,11 @@ export function CourseCard({ course, onPress }: CourseCardProps) {
           </View>
           <Text className="text-sm text-foreground/80 mb-3">{course.description}</Text>
           <View className="flex-row justify-between items-center">
-            <Text className="text-xs text-foreground/70">{course.duration}</Text>
-            <View className="bg-primary/10 px-2 py-1 rounded-full">
+            {course.duration && ( // Conditionally render duration
+              <Text className="text-xs text-foreground/70">{course.duration}</Text>
+            )}
+            <View className={`bg-primary/10 px-2 py-1 rounded-full ${!course.duration ? 'ml-auto' : ''}`}> 
+              {/* Adjust layout if duration is not present */}
               <Text className="text-xs">
                 {course.completedLessons}/{course.totalLessons}
               </Text>

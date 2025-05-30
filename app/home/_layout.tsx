@@ -46,7 +46,7 @@ export default function HomeLayout() {
           tabBarStyle: {
             position: 'absolute',
             backgroundColor: 'transparent', // Make tab bar background transparent
-            borderTopWidth: 0.5,
+            borderTopWidth: 0,
             borderTopColor: theme.border,
             height: Platform.OS === 'android' ? 74 : 80,
             overflow: 'hidden', // Important for blur effect
@@ -71,7 +71,7 @@ export default function HomeLayout() {
         })}
       >
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ focused, size }) => (
