@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SystemUI from 'expo-system-ui';
 import { NAV_THEME } from '~/lib/constants';
@@ -13,6 +14,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { ThemeToggle } from '~/components/ThemeToggle';
 import { EnvironmentIndicator } from '~/components/EnvironmentIndicator';
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
+import { UpdateChecker } from '~/components/UpdateChecker';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -61,7 +63,8 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
       <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
       <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
       <Stack
@@ -94,11 +97,20 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="demo"
+          options={{
+            title: "Rich Content Demo",
+            headerShown: true,
+          }}
+        />
       </Stack>
+      <UpdateChecker />
       <EnvironmentIndicator />
       <PortalHost />
       </ThemeProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 

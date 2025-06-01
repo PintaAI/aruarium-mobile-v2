@@ -1,0 +1,255 @@
+import React, { useState, useRef } from 'react';
+import { View, TouchableOpacity, Alert, Animated, Dimensions } from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { joinCourse, leaveCourse } from '~/lib/api/courses';
+import { CourseWithModules, CourseModule } from '~/lib/api/types';
+import { Text } from '~/components/ui/text';
+import { Card } from '~/components/ui/card';
+import { Button } from '~/components/ui/button';
+import { RichContentRenderer } from './RichContentRenderer';
+import ModuleList, { ModuleListRef } from './ModuleList';
+import { List } from 'lucide-react-native';
+import { iconWithClassName } from '~/lib/icons/iconWithClassName';
+
+interface CourseDetailProps {
+  course: CourseWithModules;
+  onRefresh?: () => void;
+}
+
+const HEADER_HEIGHT = 256; // h-64 in pixels
+const CONTENT_OFFSET = HEADER_HEIGHT - 80; // Start content 80px before header ends
+
+export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
+  const queryClient = useQueryClient();
+  const [isJoining, setIsJoining] = useState(false);
+  const scrollY = new Animated.Value(0);
+  const moduleListRef = useRef<ModuleListRef>(null);
+
+  const joinMutation = useMutation({
+    mutationFn: () => joinCourse(course.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course', course.id] });
+      onRefresh?.();
+      Alert.alert('Success', 'Successfully joined the course!');
+    },
+    onError: (error) => {
+      Alert.alert('Error', 'Failed to join course. Please try again.');
+      console.error('Join course error:', error);
+    },
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: () => leaveCourse(course.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course', course.id] });
+      onRefresh?.();
+      Alert.alert('Success', 'Successfully left the course!');
+    },
+    onError: (error) => {
+      Alert.alert('Error', 'Failed to leave course. Please try again.');
+      console.error('Leave course error:', error);
+    },
+  });
+
+  const handleJoinLeave = () => {
+    if (course.isJoined) {
+      Alert.alert(
+        'Leave Course',
+        'Are you sure you want to leave this course?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Leave', 
+            style: 'destructive',
+            onPress: () => leaveMutation.mutate()
+          }
+        ]
+      );
+    } else {
+      joinMutation.mutate();
+    }
+  };
+
+  const handleModuleSelect = (module: CourseModule) => {
+    console.log('Selected module:', module);
+    // TODO: Navigate to module content
+    Alert.alert('Module Selected', `You selected: ${module.title}`);
+  };
+
+  const handleOpenModuleList = () => {
+    moduleListRef.current?.open();
+  };
+
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'BEGINNER':
+        return 'bg-green-500';
+      case 'INTERMEDIATE':
+        return 'bg-yellow-500';
+      case 'ADVANCED':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getLevelText = (level: string) => {
+    return level.charAt(0) + level.slice(1).toLowerCase();
+  };
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, HEADER_HEIGHT],
+    outputRange: [0, -HEADER_HEIGHT / 2],
+    extrapolate: 'clamp',
+  });
+
+  const imageOpacity = scrollY.interpolate({
+    inputRange: [0, HEADER_HEIGHT / 4, HEADER_HEIGHT / 2],
+    outputRange: [1, 0.3, 0.0],
+    extrapolate: 'clamp',
+  });
+
+
+
+  return (
+    <View className="flex-1">
+      {/* Fixed Parallax Header */}
+      <Animated.View 
+        className="absolute top-0 left-0 right-0 z-0"
+        style={{
+          height: HEADER_HEIGHT,
+          transform: [{ translateY: headerTranslateY }],
+        }}
+      >
+        {course.thumbnail ? (
+          <Animated.Image
+            source={{ uri: course.thumbnail }}
+            className="w-full h-full"
+            resizeMode="cover"
+            style={{ opacity: imageOpacity }}
+          />
+        ) : (
+          <Animated.View 
+            className="w-full h-full bg-muted items-center justify-center"
+            style={{ opacity: imageOpacity }}
+          >
+            <Text className="text-muted-foreground">No image available</Text>
+          </Animated.View>
+        )}
+      </Animated.View>
+
+      {/* Scrollable Content */}
+      <Animated.ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingTop: CONTENT_OFFSET }}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
+
+        {/* Course Header Info */}
+        <View className="p-4 gap-4 bg-background rounded-t-3xl">
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-2xl font-bold flex-1">{course.title}</Text>
+            <View className={`px-3 py-1 rounded-full ${getLevelColor(course.level)}`}>
+              <Text className="text-white text-sm font-medium">
+                {getLevelText(course.level)}
+              </Text>
+            </View>
+          </View>
+          
+          {/* Author Info */}
+          <View className="flex-row items-center gap-2">
+            <Text className="text-muted-foreground">by</Text>
+            <Text className="font-medium text-primary">
+              {course.author.name || course.author.email}
+            </Text>
+          </View>
+
+          {/* Course Stats */}
+          <View className="flex-row gap-4">
+            <View className="flex-row items-center gap-1">
+              <Text className="text-sm text-muted-foreground">
+                {course.totalMembers} members
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <Text className="text-sm text-muted-foreground">
+                {course.totalModules} modules
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View className="gap-3">
+          {/* Join/Leave Button */}
+          <TouchableOpacity
+            onPress={handleJoinLeave}
+            disabled={joinMutation.isPending || leaveMutation.isPending}
+            className={`py-3 px-6 rounded-lg ${
+              course.isJoined 
+                ? 'bg-secondary' 
+                : 'bg-primary'
+            } ${
+              (joinMutation.isPending || leaveMutation.isPending) ? 'opacity-50' : ''
+            }`}
+          >
+            <Text className={`text-center font-medium ${
+              course.isJoined ? 'text-secondary-foreground' : 'text-primary-foreground'
+            }`}>
+              {joinMutation.isPending || leaveMutation.isPending
+                ? 'Processing...'
+                : course.isJoined 
+                  ? 'Leave Course' 
+                  : 'Join Course'
+              }
+            </Text>
+          </TouchableOpacity>
+
+          {/* Module List Button */}
+          {course.isJoined && course.modules && course.modules.length > 0 && (
+            <Button
+              onPress={handleOpenModuleList}
+              variant="outline"
+              className="w-full"
+            >
+              <View className="flex-row items-center justify-center gap-2">
+                {(() => {
+                  const ListIcon = iconWithClassName(List);
+                  return <ListIcon size={16} className="text-foreground" />;
+                })()}
+                <Text className="text-foreground font-medium">View Modules</Text>
+              </View>
+            </Button>
+          )}
+        </View>
+      </View>
+
+        {/* Course Description */}
+        {course.description && (
+          <Card className="m-4 p-4">
+            <RichContentRenderer 
+              jsonDescription={course.jsonDescription}
+              fallbackDescription={course.description}
+              className="text-muted-foreground"
+            />
+          </Card>
+        )}
+      </Animated.ScrollView>
+
+      {/* Module List Bottom Sheet */}
+      <ModuleList
+        ref={moduleListRef}
+        modules={course.modules || []}
+        onModuleSelect={handleModuleSelect}
+        courseTitle={course.title}
+      />
+    </View>
+  );
+}

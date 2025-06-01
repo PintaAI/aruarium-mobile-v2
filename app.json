@@ -26,8 +26,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.rorez.pejuangkorea",
-      "runtimeVersion": "1.0.0"
+      "package": "com.rorez.pejuangkorea"
     },
     "web": {
       "bundler": "metro",
@@ -47,8 +46,12 @@
         "projectId": "8c350b18-268a-4dc5-8644-635f1481f52f"
       }
     },
+    "runtimeVersion": "1.0.0",
     "updates": {
-      "url": "https://u.expo.dev/8c350b18-268a-4dc5-8644-635f1481f52f"
+      "url": "https://u.expo.dev/8c350b18-268a-4dc5-8644-635f1481f52f",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

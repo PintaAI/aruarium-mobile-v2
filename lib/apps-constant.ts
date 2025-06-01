@@ -1,4 +1,4 @@
-import { Keyboard, GraduationCap, BookOpen, PencilRuler, Swords, LucideIcon, Languages } from 'lucide-react-native';
+import { Keyboard, GraduationCap, BookOpen, PencilRuler, Swords, LucideIcon, Languages, Code } from 'lucide-react-native';
 import { iconWithClassName } from '~/lib/icons/iconWithClassName';
 
 // Apply iconWithClassName to icons
@@ -8,6 +8,7 @@ const EnhancedSwords = iconWithClassName(Swords);
 const EnhancedKeyboard = iconWithClassName(Keyboard);
 const EnhancedGraduationCap = iconWithClassName(GraduationCap);
 const EnhancedLanguages = iconWithClassName(Languages);
+const EnhancedCode = iconWithClassName(Code);
 
 export type AppItem = {
   icon: LucideIcon;
@@ -51,6 +52,12 @@ export const APPS: AppItem[] = [
     icon: EnhancedLanguages,
     name: 'Translate',
     route: 'apps/translate',
+    type: 'app',
+  },
+  {
+    icon: EnhancedCode,
+    name: 'Rich Demo',
+    route: '/demo',
     type: 'app',
   },
 ];

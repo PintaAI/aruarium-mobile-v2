@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, } from 'react-native';
+
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { useGameStore } from '~/lib/game/z-type/store/gameStore';
@@ -58,7 +58,7 @@ export default function StartScreen({ iconName, title, onPlay, onExit }: StartSc
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+   
       <View className="flex-1 justify-center items-center bg-background p-6">
         {/* Game Logo/Icon */}
         {iconName && (
@@ -123,6 +123,6 @@ export default function StartScreen({ iconName, title, onPlay, onExit }: StartSc
           onLevelChange={handleLevelChange}
         />
       </View>
-    </GestureHandlerRootView>
+    
   );
 }

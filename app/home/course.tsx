@@ -60,7 +60,7 @@ export default function Course() {
 
   const handleCoursePress = (courseId: string) => {
     console.log('Navigate to course:', courseId);
-    // Example navigation: router.push(`/home/course/${courseId}`);
+    router.push(`/courses/${courseId}`);
   };
 
   if (loading && !refreshing) {

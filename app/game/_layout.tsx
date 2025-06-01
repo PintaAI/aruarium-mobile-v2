@@ -6,7 +6,7 @@ export default function GameLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'fade',
+        animation: 'slide_from_bottom',
       }}
     >
       <Stack.Screen name="z-type" />
