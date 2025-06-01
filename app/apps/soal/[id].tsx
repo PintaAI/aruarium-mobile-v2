@@ -1,14 +1,14 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { Text } from '../../../components/ui/text';
+import Quiz from '../../../components/soal/quiz';
 
 export default function SoalScreen() {
   const { id } = useLocalSearchParams();
 
   return (
-    <View className="flex-1 items-center justify-center bg-background">
-      <Text className="text-2xl font-bold">Soal Screen</Text>
-      <Text>ID: {id}</Text>
+    <View className="flex-1 bg-background">
+      <Stack.Screen options={{ title: 'Quiz' }} />
+      <Quiz collectionId={id as string} />
     </View>
   );
 }

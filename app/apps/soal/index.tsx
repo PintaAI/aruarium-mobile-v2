@@ -1,12 +1,10 @@
 import { View } from 'react-native';
-import { Text } from '../../../components/ui/text';
+import SoalList from '../../../components/soal/soal-list';
 
 export default function SoalIndexScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-background">
-      <Text className="text-2xl font-bold">Soal</Text>
-      <Text className="mt-4 text-foreground/80">comming soon!</Text>
+    <View className="flex-1 bg-background">
+      <SoalList />
     </View>
   );
 }
- 

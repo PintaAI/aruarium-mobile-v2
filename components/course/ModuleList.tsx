@@ -1,16 +1,19 @@
 import React, { useState, useCallback, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, useColorScheme, Animated } from 'react-native';
+import { View, TouchableOpacity, useColorScheme, Animated, Dimensions } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { CourseModule } from '~/lib/api/types';
 import BottomSheet, { BottomSheetView, BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { NAV_THEME } from '~/lib/constants';
 import { Lock, CheckCircle } from 'lucide-react-native';
 import { iconWithClassName } from '~/lib/icons/iconWithClassName';
+import Reanimated, { useSharedValue, runOnJS, useAnimatedReaction } from 'react-native-reanimated';
 
 interface ModuleListProps {
   modules: CourseModule[];
   onModuleSelect: (module: CourseModule) => void;
   courseTitle: string;
+  onOpenChange?: (isOpen: boolean) => void;
+  onSheetHeightChange?: (heightPercentage: number) => void;
 }
 
 export interface ModuleListRef {
@@ -21,12 +24,18 @@ export interface ModuleListRef {
 const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({ 
   modules, 
   onModuleSelect,
-  courseTitle 
+  courseTitle,
+  onOpenChange,
+  onSheetHeightChange
 }, ref) => {
   // Bottom sheet setup
-  const snapPoints = ['25%', '50%'];
+  const snapPoints = ['25%', '90%'];
   const [sheetIndex, setSheetIndex] = useState(-1);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
+  const animatedPosition = useSharedValue(0);
+  
+  // Screen dimensions for calculating height percentage
+  const screenHeight = Dimensions.get('window').height;
 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
@@ -40,17 +49,24 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
 
   const handleSheetChanges = useCallback((index: number) => {
     setSheetIndex(index);
-  }, []);
+    onOpenChange?.(index >= 0);
+  }, [onOpenChange]);
+
+  // Real-time position tracking for dynamic scaling
+  useAnimatedReaction(
+    () => animatedPosition.value,
+    (position) => {
+      // Convert position to height percentage
+      const heightPercentage = Math.max(0, position / screenHeight);
+      
+      // Call the height change callback on JS thread
+      runOnJS(onSheetHeightChange ?? (() => {}))(heightPercentage);
+    },
+    [screenHeight, onSheetHeightChange]
+  );
 
   const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.3}
-      />
-    ),
+    () => null,
     []
   );
 
@@ -72,6 +88,7 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
       index={-1}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
+      animatedPosition={animatedPosition}
       enablePanDownToClose={true}
       enableContentPanningGesture={sheetIndex === snapPoints.length - 1}
       enableHandlePanningGesture={true}

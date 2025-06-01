@@ -11,6 +11,7 @@ export default function GameLayout() {
     >
       <Stack.Screen name="z-type" />
       <Stack.Screen name="flashcard" />
+      <Stack.Screen name="matchkor" />
     </Stack>
   );
 }

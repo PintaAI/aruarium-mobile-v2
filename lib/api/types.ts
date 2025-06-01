@@ -211,3 +211,171 @@ export interface ModuleApiError extends Error {
   status?: number;
   code?: string;
 }
+
+// Koleksi Soal Types
+export interface KoleksiSoalAuthor {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
+export interface Opsi {
+  id: number;
+  soalId: number;
+  opsiText: string;
+  isCorrect: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Soal {
+  id: number;
+  koleksiId: number;
+  pertanyaan: string;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | null;
+  explanation?: string | null;
+  isActive: boolean;
+  author: KoleksiSoalAuthor;
+  opsis: Opsi[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KoleksiSoal {
+  id: number;
+  nama: string;
+  deskripsi?: string | null;
+  isPrivate: boolean;
+  soalsCount?: number;
+  tryoutsCount?: number;
+  createdAt: string;
+  updatedAt: string;
+  soals?: Soal[];
+}
+
+export interface KoleksiSoalWithSoals extends KoleksiSoal {
+  soals: Soal[];
+}
+
+// Koleksi Soal Request Types
+export interface CreateKoleksiSoalRequest {
+  nama: string;
+  deskripsi?: string;
+  isPrivate?: boolean;
+}
+
+export interface UpdateKoleksiSoalRequest {
+  nama?: string;
+  deskripsi?: string;
+  isPrivate?: boolean;
+}
+
+export interface CreateSoalRequest {
+  pertanyaan: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  explanation?: string;
+  opsis?: CreateOpsiRequest[];
+}
+
+export interface UpdateSoalRequest {
+  pertanyaan?: string;
+  attachmentUrl?: string;
+  attachmentType?: string;
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  explanation?: string;
+  isActive?: boolean;
+}
+
+export interface CreateOpsiRequest {
+  opsiText: string;
+  isCorrect: boolean;
+}
+
+export interface UpdateOpsiRequest {
+  opsiText?: string;
+  isCorrect?: boolean;
+}
+
+// Koleksi Soal Response Types
+export interface CreateKoleksiSoalResponse {
+  id: number;
+  message: string;
+}
+
+export interface UpdateKoleksiSoalResponse {
+  id: number;
+  nama: string;
+  deskripsi: string | null;
+  isPrivate: boolean;
+  updatedAt: string;
+  message: string;
+}
+
+export interface DeleteKoleksiSoalResponse {
+  message: string;
+}
+
+export interface CreateSoalResponse {
+  id: number;
+  message: string;
+}
+
+export interface UpdateSoalResponse {
+  id: number;
+  pertanyaan: string;
+  difficulty: string | null;
+  isActive: boolean;
+  updatedAt: string;
+  message: string;
+}
+
+export interface DeleteSoalResponse {
+  message: string;
+}
+
+export interface CreateOpsiResponse {
+  id: number;
+  message: string;
+}
+
+export interface UpdateOpsiResponse {
+  id: number;
+  opsiText: string;
+  isCorrect: boolean;
+  updatedAt: string;
+  message: string;
+}
+
+export interface DeleteOpsiResponse {
+  message: string;
+}
+
+// Koleksi Soal API Query Types
+export interface GetKoleksiSoalsParams {
+  mine?: boolean;
+  publicOnly?: boolean;
+}
+
+export interface GetSoalsParams {
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  includeInactive?: boolean;
+  includeOpsis?: boolean;
+}
+
+export interface GetKoleksiSoalParams {
+  includeSoals?: boolean;
+}
+
+export interface GetSoalParams {
+  includeOpsis?: boolean;
+}
+
+// Error Types
+export interface KoleksiSoalApiError extends Error {
+  status?: number;
+  code?: string;
+}

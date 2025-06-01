@@ -8,10 +8,9 @@ import { joinCourse, leaveCourse } from '~/lib/api/courses';
 import { CourseWithModules, CourseModule } from '~/lib/api/types';
 import { Text } from '~/components/ui/text';
 import { Card } from '~/components/ui/card';
-import { Button } from '~/components/ui/button';
 import { RichContentRenderer } from './RichContentRenderer';
 import ModuleList, { ModuleListRef } from './ModuleList';
-import { List } from 'lucide-react-native';
+import { List, LogOut } from 'lucide-react-native';
 import { iconWithClassName } from '~/lib/icons/iconWithClassName';
 
 interface CourseDetailProps {
@@ -27,6 +26,8 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
   const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
   const scrollY = new Animated.Value(0);
+  const INITIAL_CONTENT_SCALE = 0.90; // Content is initially scaled down
+  const scaleAnim = new Animated.Value(INITIAL_CONTENT_SCALE);
   const moduleListRef = useRef<ModuleListRef>(null);
   const { colorScheme } = useColorScheme();
   
@@ -84,7 +85,27 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
   };
 
   const handleOpenModuleList = () => {
+    // The scaling will now be driven by handleSheetHeightChange as the module list opens.
     moduleListRef.current?.open();
+  };
+
+  const handleModuleListOpenChange = (isOpen: boolean) => {
+    // Only animate scale back when closing
+    if (!isOpen) {
+      Animated.timing(scaleAnim, {
+        toValue: INITIAL_CONTENT_SCALE, // Animate back to initial scaled-down state
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const handleSheetHeightChange = (heightPercentage: number) => {
+    // Content scales UP as the sheet opens, from INITIAL_CONTENT_SCALE to 1.0
+    const targetScale = INITIAL_CONTENT_SCALE + (heightPercentage * (1.0 - INITIAL_CONTENT_SCALE));
+    
+    // Set value directly for instant response - no animation delay
+    scaleAnim.setValue(targetScale);
   };
 
 
@@ -121,6 +142,13 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
 
   return (
     <View className="flex-1">
+      <Animated.View 
+        className="flex-1 overflow-hidden"
+        style={{
+          transform: [{ scale: scaleAnim }],
+          borderRadius: 42,
+        }}
+      >
       {/* Fixed Parallax Header */}
       <Animated.View 
         className="absolute top-0 left-0 right-0 z-0"
@@ -208,45 +236,74 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
 
         {/* Action Buttons */}
         <View className="gap-3">
-          {/* Join/Leave Button */}
-          <TouchableOpacity
-            onPress={handleJoinLeave}
-            disabled={joinMutation.isPending || leaveMutation.isPending}
-            className={`py-3 px-6 rounded-lg ${
-              course.isJoined 
-                ? 'bg-secondary' 
-                : 'bg-primary'
-            } ${
-              (joinMutation.isPending || leaveMutation.isPending) ? 'opacity-50' : ''
-            }`}
-          >
-            <Text className={`text-center font-medium ${
-              course.isJoined ? 'text-secondary-foreground' : 'text-primary-foreground'
-            }`}>
-              {joinMutation.isPending || leaveMutation.isPending
-                ? 'Processing...'
-                : course.isJoined 
-                  ? 'Leave Course' 
-                  : 'Join Course'
-              }
-            </Text>
-          </TouchableOpacity>
-
-          {/* Module List Button */}
-          {course.isJoined && course.modules && course.modules.length > 0 && (
-            <Button
-              onPress={handleOpenModuleList}
-              variant="outline"
-              className="w-full"
-            >
-              <View className="flex-row items-center justify-center gap-2">
-                {(() => {
-                  const ListIcon = iconWithClassName(List);
-                  return <ListIcon size={16} className="text-foreground" />;
-                })()}
-                <Text className="text-foreground font-medium">View Modules</Text>
+          {/* Joined Course Actions */}
+          {course.isJoined ? (
+            course.modules && course.modules.length > 0 ? (
+              /* 70-30 Layout: View Modules (70%) + Leave Course (30%) */
+              <View className="flex-row gap-3">
+                {/* View Modules Button - 70% */}
+                <TouchableOpacity
+                  onPress={handleOpenModuleList}
+                  className="flex-1 py-4 px-4 rounded-xl bg-primary"
+                  style={{ flex: 0.9 }}
+                >
+                  <View className="flex-row items-center justify-center gap-3">
+                    {(() => {
+                      const ListIcon = iconWithClassName(List);
+                      return <ListIcon size={20} className="text-primary-foreground" />;
+                    })()}
+                    <Text className="text-primary-foreground font-semibold text-base">
+                      Lihat module
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                {/* Leave Course Button - 30% (Icon Only) */}
+                <TouchableOpacity
+                  onPress={handleJoinLeave}
+                  disabled={leaveMutation.isPending}
+                  className={`py-4 px-4 rounded-xl border border-destructive items-center justify-center ${
+                    leaveMutation.isPending ? 'opacity-50' : ''
+                  }`}
+                  style={{ flex: 0.1 }}
+                >
+                  {leaveMutation.isPending ? (
+                    <Text className="text-destructive text-xs font-medium">...</Text>
+                  ) : (
+                    (() => {
+                      const LogOutIcon = iconWithClassName(LogOut);
+                      return <LogOutIcon size={20} className="text-destructive" />;
+                    })()
+                  )}
+                </TouchableOpacity>
               </View>
-            </Button>
+            ) : (
+              /* No modules - Only Leave Course Button */
+              <TouchableOpacity
+                onPress={handleJoinLeave}
+                disabled={leaveMutation.isPending}
+                className={`py-3 px-6 rounded-xl border border-destructive ${
+                  leaveMutation.isPending ? 'opacity-50' : ''
+                }`}
+              >
+                <Text className="text-center font-medium text-destructive">
+                  {leaveMutation.isPending ? 'Processing...' : 'Leave Course'}
+                </Text>
+              </TouchableOpacity>
+            )
+          ) : (
+            /* Join Course Button - Single Primary Action */
+            <TouchableOpacity
+              onPress={handleJoinLeave}
+              disabled={joinMutation.isPending}
+              className={`py-4 px-6 rounded-xl bg-primary ${
+                joinMutation.isPending ? 'opacity-50' : ''
+              }`}
+            >
+              <Text className="text-center font-semibold text-base text-primary-foreground">
+                {joinMutation.isPending ? 'Joining...' : 'Join Course'}
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -263,12 +320,16 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
         )}
       </Animated.ScrollView>
 
-      {/* Module List Bottom Sheet */}
+      </Animated.View>
+      
+      {/* Module List Bottom Sheet - Outside scaled container */}
       <ModuleList
         ref={moduleListRef}
         modules={course.modules || []}
         onModuleSelect={handleModuleSelect}
         courseTitle={course.title}
+        onOpenChange={handleModuleListOpenChange}
+        onSheetHeightChange={handleSheetHeightChange}
       />
     </View>
   );
