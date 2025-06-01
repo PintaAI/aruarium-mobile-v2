@@ -27,7 +27,7 @@ export default function HomeLayout() {
   return (
       <Tabs
         screenOptions={({ route }) => ({
-          headerShown: route.name !== 'fyp-soal',
+          headerShown: route.name !== 'fyp-soal' && route.name !== 'index',
           headerPressColor: 'transparent',
           tabBarShowLabel: false,
           tabBarActiveTintColor: theme.primary,
@@ -45,15 +45,22 @@ export default function HomeLayout() {
             : undefined,
           tabBarStyle: {
             position: 'absolute',
-            backgroundColor: 'transparent', // Make tab bar background transparent
+            backgroundColor: 'transparent',
             borderTopWidth: 0,
             borderTopColor: theme.border,
-            height: Platform.OS === 'android' ? 74 : 80,
-            overflow: 'hidden', // Important for blur effect
+            height: Platform.OS === 'android' ? 64 : 70,
+            overflow: 'hidden',
+            // Pill shape styling
+            left: 20,
+            right: 20,
+            bottom: 40,
+            borderRadius: 30,
+            marginHorizontal: 12,
+            paddingHorizontal: 8,
           },
           tabBarBackground: () => (
             <BlurView
-              intensity={80}
+              intensity={90}
               tint={isDarkColorScheme ? "dark" : "light"}
               experimentalBlurMethod={Platform.OS === 'android' ? "dimezisBlurView" : undefined}
               style={{
@@ -62,11 +69,14 @@ export default function HomeLayout() {
                 left: 0,
                 right: 0,
                 bottom: 0,
+                borderRadius: 35,
+            
               }}
             />
           ),
           tabBarItemStyle: {
-            paddingTop: 8
+            marginVertical: 15,
+            flex: 1,
           }
         })}
       >

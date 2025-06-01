@@ -1,6 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { View, TouchableOpacity, Alert, Animated, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { useColorScheme } from '~/lib/useColorScheme';
 import { joinCourse, leaveCourse } from '~/lib/api/courses';
 import { CourseWithModules, CourseModule } from '~/lib/api/types';
 import { Text } from '~/components/ui/text';
@@ -21,9 +24,14 @@ const CONTENT_OFFSET = HEADER_HEIGHT - 80; // Start content 80px before header e
 
 export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
   const scrollY = new Animated.Value(0);
   const moduleListRef = useRef<ModuleListRef>(null);
+  const { colorScheme } = useColorScheme();
+  
+  // Get background color based on theme
+  const backgroundColor = colorScheme === 'dark' ? 'rgb(9, 9, 11)' : 'rgb(255, 255, 255)';
 
   const joinMutation = useMutation({
     mutationFn: () => joinCourse(course.id),
@@ -72,8 +80,7 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
 
   const handleModuleSelect = (module: CourseModule) => {
     console.log('Selected module:', module);
-    // TODO: Navigate to module content
-    Alert.alert('Module Selected', `You selected: ${module.title}`);
+    router.push(`/modules/${module.id}`);
   };
 
   const handleOpenModuleList = () => {
@@ -123,12 +130,25 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
         }}
       >
         {course.thumbnail ? (
-          <Animated.Image
-            source={{ uri: course.thumbnail }}
-            className="w-full h-full"
-            resizeMode="cover"
-            style={{ opacity: imageOpacity }}
-          />
+          <>
+            <Animated.Image
+              source={{ uri: course.thumbnail }}
+              className="w-full h-full"
+              resizeMode="cover"
+              style={{ opacity: imageOpacity }}
+            />
+            <LinearGradient
+              colors={['transparent', backgroundColor]} 
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+              locations={[0.2, 1]}
+            />
+          </>
         ) : (
           <Animated.View 
             className="w-full h-full bg-muted items-center justify-center"

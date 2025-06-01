@@ -1,11 +1,10 @@
-import React, { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { View, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useState, useCallback, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
+import { View, TouchableOpacity, useColorScheme, Animated } from 'react-native';
 import { Text } from '~/components/ui/text';
-import { Button } from '~/components/ui/button';
 import { CourseModule } from '~/lib/api/types';
-import BottomSheet, { BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { NAV_THEME } from '~/lib/constants';
-import { BookOpen, Lock, CheckCircle } from 'lucide-react-native';
+import { Lock, CheckCircle } from 'lucide-react-native';
 import { iconWithClassName } from '~/lib/icons/iconWithClassName';
 
 interface ModuleListProps {
@@ -25,7 +24,7 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
   courseTitle 
 }, ref) => {
   // Bottom sheet setup
-  const snapPoints = ['25%', '70%'];
+  const snapPoints = ['25%', '50%'];
   const [sheetIndex, setSheetIndex] = useState(-1);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
 
@@ -43,6 +42,18 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
     setSheetIndex(index);
   }, []);
 
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.3}
+      />
+    ),
+    []
+  );
+
   const handleModuleSelect = (module: CourseModule) => {
     if (!module.isLocked) {
       onModuleSelect(module);
@@ -50,30 +61,7 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
     }
   };
 
-  const getModuleIcon = (module: CourseModule) => {
-    if (module.isCompleted) {
-      const CheckIcon = iconWithClassName(CheckCircle);
-      return <CheckIcon size={16} className="text-green-600" />;
-    }
-    if (module.isLocked) {
-      const LockIcon = iconWithClassName(Lock);
-      return <LockIcon size={16} className="text-muted-foreground" />;
-    }
-    const BookIcon = iconWithClassName(BookOpen);
-    return <BookIcon size={16} className="text-primary" />;
-  };
 
-  const getModuleStatus = (module: CourseModule) => {
-    if (module.isCompleted) return 'Completed';
-    if (module.isLocked) return 'Locked';
-    return 'Available';
-  };
-
-  const getModuleStatusColor = (module: CourseModule) => {
-    if (module.isCompleted) return 'bg-green-500/20 text-green-600';
-    if (module.isLocked) return 'bg-muted text-muted-foreground';
-    return 'bg-primary/20 text-primary';
-  };
 
   const colorScheme = useColorScheme();
   const theme = NAV_THEME[colorScheme ?? 'light'];
@@ -90,17 +78,29 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
       enableOverDrag={false}
       enableDynamicSizing={false}
       backgroundStyle={{ backgroundColor: theme.card }}
-      handleIndicatorStyle={{ backgroundColor: theme.border }}
+      backdropComponent={renderBackdrop}
+      handleStyle={{
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+        borderWidth: 1,
+        borderColor: theme.border,
+        borderBottomWidth: 0
+      }}
+      handleIndicatorStyle={{ 
+        backgroundColor: theme.border,
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        opacity: 0.6
+      }}
     >
-      <BottomSheetView className="flex-1 rounded-3xl overflow-hidden border border-border">
+      <BottomSheetView className="flex-1 overflow-hidden border-x border-border">
         {/* Header */}
-        <View className="flex-row justify-between items-center p-4 border-b border-border">
-          <View className="flex-1">
-            <Text className="text-xl font-bold">Course Modules</Text>
-            <Text className="text-sm text-muted-foreground mt-1" numberOfLines={1}>
-              {courseTitle}
-            </Text>
-          </View>
+        <View className="mx-4 my-4">
+          <Text className="text-xl font-bold">Course Modules</Text>
+          <Text className="text-sm text-muted-foreground" numberOfLines={1}>
+            {courseTitle}
+          </Text>
         </View>
 
         {/* Content */}
@@ -115,64 +115,70 @@ const ModuleList = forwardRef<ModuleListRef, ModuleListProps>(({
                 modules
                   .sort((a, b) => a.order - b.order)
                   .map((module) => (
-                    <TouchableOpacity
-                      key={module.id}
-                      onPress={() => handleModuleSelect(module)}
-                      disabled={module.isLocked}
-                      className={`p-3 rounded-lg flex-row justify-between items-center border mb-3 ${
-                        module.isLocked 
-                          ? 'bg-muted/30 border-muted opacity-60' 
-                          : 'bg-secondary/30 border-transparent'
-                      }`}
-                    >
-                      <View className="flex-1">
-                        <View className="flex-row items-center gap-2">
-                          <View className="w-6 h-6 rounded-full flex justify-center items-center bg-background">
-                            {getModuleIcon(module)}
-                          </View>
-                          <Text className={`font-bold text-lg ${
-                            module.isLocked ? 'text-muted-foreground' : 'text-foreground'
-                          }`}>
+                    <View key={module.id} className="relative mb-3">
+                      <TouchableOpacity
+                        onPress={() => handleModuleSelect(module)}
+                        disabled={module.isLocked}
+                        
+                        className={`p-4 rounded-lg border ${
+                          module.isLocked 
+                            ? 'bg-muted/20 border-muted opacity-40' 
+                            : 'bg-secondary/30 border-transparent'
+                        }`}
+                      >
+                        <View className="gap-2">
+                          <Text 
+                            className={`font-semibold text-base ${
+                              module.isLocked ? 'text-muted-foreground' : 'text-foreground'
+                            }`}
+                            numberOfLines={1}
+                          >
                             {module.title}
                           </Text>
+                          
+                          <Text 
+                            className={`text-sm ${
+                              module.isLocked ? 'text-muted-foreground' : 'text-muted-foreground'
+                            }`} 
+                            numberOfLines={2}
+                          >
+                            {module.description}
+                          </Text>
                         </View>
-                        
-                        <Text className={`text-xs mt-1 ml-8 ${
-                          module.isLocked ? 'text-muted-foreground' : 'text-muted-foreground'
-                        }`} numberOfLines={2}>
-                          {module.description}
-                        </Text>
-                      </View>
+                      </TouchableOpacity>
                       
-                      <View className="flex-row items-center gap-2">
-                        <View className="bg-secondary/50 px-2 py-1 rounded">
-                          <Text className="text-xs font-bold text-foreground">
-                            #{module.order}
-                          </Text>
+                      {/* Completion Indicator */}
+                      {module.isCompleted && (
+                        <View className="absolute top-2 right-2">
+                          <View className="bg-green-500/30 p-0.5 rounded-full shadow-lg">
+                            {(() => {
+                              const CheckIcon = iconWithClassName(CheckCircle);
+                              return <CheckIcon size={10} className="text-white" />;
+                            })()}
+                          </View>
                         </View>
-                        <View className={`px-2 py-1 rounded ${getModuleStatusColor(module)}`}>
-                          <Text className="text-xs font-bold">
-                            {getModuleStatus(module)}
-                          </Text>
+                      )}
+                      
+                      {/* Lock Overlay */}
+                      {module.isLocked && (
+                        <View className="absolute inset-0 flex justify-center items-center bg-background/20 rounded-lg">
+                          <View className="bg-background/90 p-2 rounded-full">
+                            {(() => {
+                              const LockIcon = iconWithClassName(Lock);
+                              return <LockIcon size={20} className="text-muted-foreground" />;
+                            })()}
+                          </View>
                         </View>
-                      </View>
-                    </TouchableOpacity>
+                      )}
+                    </View>
                   ))
               )}
             </View>
           </BottomSheetScrollView>
         </View>
 
-        {/* Footer */}
-        <View className="p-4 border-t border-border">
-          <Button
-            onPress={() => bottomSheetRef.current?.close()}
-            className="w-full"
-            variant="secondary"
-          >
-            <Text className="text-secondary-foreground font-medium">Close</Text>
-          </Button>
-        </View>
+    
+
       </BottomSheetView>
     </BottomSheet>
   );

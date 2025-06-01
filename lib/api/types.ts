@@ -160,6 +160,42 @@ export interface GetCoursesParams {
   available?: boolean;
 }
 
+// Module Types
+export interface ModuleDetail {
+  id: number;
+  title: string;
+  description: string;
+  jsonDescription: string;
+  htmlDescription: string;
+  order: number;
+  isCompleted: boolean;
+  isLocked: boolean;
+  courseId: number;
+  course: {
+    id: number;
+    title: string;
+  };
+  userCompletion: {
+    isCompleted: boolean;
+    completedAt: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Module Request Types
+export interface UpdateModuleCompletionRequest {
+  isCompleted: boolean;
+}
+
+// Module Response Types
+export interface UpdateModuleCompletionResponse {
+  moduleId: number;
+  isCompleted: boolean;
+  updatedAt: string;
+  message: string;
+}
+
 // Error Types
 export interface VocabularyApiError extends Error {
   status?: number;
@@ -167,6 +203,11 @@ export interface VocabularyApiError extends Error {
 }
 
 export interface CourseApiError extends Error {
+  status?: number;
+  code?: string;
+}
+
+export interface ModuleApiError extends Error {
   status?: number;
   code?: string;
 }

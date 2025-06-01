@@ -44,8 +44,8 @@ export const EnvironmentIndicator: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 50, // Adjust based on your status bar height
-    right: 10,
+    top: 40, // Adjust based on your status bar height
+    right: 30,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
