@@ -16,17 +16,17 @@ export const EnvironmentIndicator: React.FC = () => {
     switch (config.environment) {
       case 'development':
         return {
-          backgroundColor: '#10B981', // Green
+          backgroundColor: 'rgba(16, 185, 129, 0.8)', // Green with transparency
           text: 'DEV',
         };
       case 'preview':
         return {
-          backgroundColor: '#F59E0B', // Orange/Yellow
+          backgroundColor: 'rgba(245, 158, 11, 0.8)', // Orange/Yellow with transparency
           text: 'PREVIEW',
         };
       default:
         return {
-          backgroundColor: '#6B7280', // Gray
+          backgroundColor: 'rgba(107, 114, 128, 0.8)', // Gray with transparency
           text: config.environment.toUpperCase(),
         };
     }

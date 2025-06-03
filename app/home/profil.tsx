@@ -1,203 +1,324 @@
-import { View, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Text } from '~/components/ui/text';
-import { ThemeToggle } from '~/components/ThemeToggle';
 import { Card } from '~/components/ui/card';
-import { Button } from '~/components/ui/button';
-import { User, Settings, ChevronRight, Bell, Shield, HelpCircle, LogOut } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { Trophy, Medal, Zap, TrendingUp, Users, Crown, Star } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { logout, getCurrentUser, UserInfo, getToken } from '~/lib/auth';
+import { getCurrentUser, UserInfo } from '~/lib/auth';
+import { getXPLeaderboard, getStreakLeaderboard, getActivityLeaderboard, LeaderboardResponse, LeaderboardUser } from '~/lib/api/leaderboard';
+import { iconWithClassName } from '~/lib/icons/iconWithClassName';
+import { ActivityLogViewer } from '~/components/ActivityLogViewer';
 
-const MENU_ITEMS = [
+const TrophyIcon = iconWithClassName(Trophy);
+const MedalIcon = iconWithClassName(Medal);
+const ZapIcon = iconWithClassName(Zap);
+const TrendingUpIcon = iconWithClassName(TrendingUp);
+const UsersIcon = iconWithClassName(Users);
+const CrownIcon = iconWithClassName(Crown);
+const StarIcon = iconWithClassName(Star);
+
+type LeaderboardType = 'xp' | 'streak' | 'activity' | 'feed';
+
+const LEADERBOARD_TABS = [
+  
   {
-    icon: Settings,
-    title: 'App Settings',
-    description: 'Theme, notifications, language'
+    key: 'xp' as LeaderboardType,
+    title: 'XP Leaders',
+    icon: TrophyIcon,
+    description: 'Top XP earners'
+  },
+    {
+    key: 'feed' as LeaderboardType,
+    title: 'Live Feed',
+    icon: UsersIcon,
+    description: 'Global activity'
   },
   {
-    icon: Bell,
-    title: 'Notifications',
-    description: 'Configure notifications'
+    key: 'streak' as LeaderboardType,
+    title: 'Streak Masters',
+    icon: ZapIcon,
+    description: 'Longest streaks'
   },
   {
-    icon: Shield,
-    title: 'Privacy',
-    description: 'Manage your data and privacy'
+    key: 'activity' as LeaderboardType,
+    title: 'Most Active',
+    icon: TrendingUpIcon,
+    description: 'Activity champions'
   },
-  {
-    icon: HelpCircle,
-    title: 'Help & Support',
-    description: 'FAQs and contact support'
-  }
+
 ];
 
-export default function Profile() {
-  const router = useRouter();
+function getRankIcon(rank: number) {
+  switch (rank) {
+    case 1:
+      return { icon: CrownIcon, color: 'text-yellow-500' };
+    case 2:
+      return { icon: MedalIcon, color: 'text-gray-400' };
+    case 3:
+      return { icon: MedalIcon, color: 'text-orange-600' };
+    default:
+      return { icon: StarIcon, color: 'text-primary' };
+  }
+}
+
+function getRankBadgeColor(rank: number) {
+  switch (rank) {
+    case 1:
+      return 'bg-yellow-500';
+    case 2:
+      return 'bg-gray-400';
+    case 3:
+      return 'bg-orange-600';
+    default:
+      return 'bg-primary';
+  }
+}
+
+export default function Leaderboard() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [rawToken, setRawToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<LeaderboardType>('xp');
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardResponse | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   
-  // Fetch user information from JWT token
+  // Fetch user information and leaderboard data
   useEffect(() => {
-    async function fetchUserInfo() {
+    async function fetchData() {
       try {
         const user = await getCurrentUser();
-        const token = await getToken();
         setUserInfo(user);
-        setRawToken(token);
+        await fetchLeaderboardData(activeTab);
       } catch (error) {
-        console.error('Error fetching user info:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     }
     
-    fetchUserInfo();
+    fetchData();
   }, []);
-  
-  const handleLogout = async () => {
+
+  // Fetch leaderboard data when tab changes
+  useEffect(() => {
+    if (!loading && activeTab !== 'feed') {
+      fetchLeaderboardData(activeTab);
+    }
+  }, [activeTab]);
+
+  const fetchLeaderboardData = async (type: LeaderboardType) => {
+    if (type === 'feed') return; // No need to fetch for activity feed
+    
     try {
-      await logout();
-      router.replace('/auth/login' as any);
+      setRefreshing(true);
+      let data: LeaderboardResponse;
+      
+      switch (type) {
+        case 'xp':
+          data = await getXPLeaderboard();
+          break;
+        case 'streak':
+          data = await getStreakLeaderboard();
+          break;
+        case 'activity':
+          data = await getActivityLeaderboard();
+          break;
+        default:
+          data = await getXPLeaderboard();
+      }
+      
+      setLeaderboardData(data);
     } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert('Error', 'Failed to log out. Please try again.');
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setRefreshing(false);
     }
   };
   
-  // Get appropriate display values from user info
-  const displayName = userInfo?.name || userInfo?.email?.split('@')[0] || 'User';
-  const displayEmail = userInfo?.email || 'No email available';
-  const profileImage = userInfo?.image || 'https://github.com/shadcn.png';
+  const getMetricValue = (user: LeaderboardUser) => {
+    switch (activeTab) {
+      case 'xp':
+        return `${user.xp.toLocaleString()} XP`;
+      case 'streak':
+        return `${user.currentStreak} days`;
+      case 'activity':
+        return user.activityCount ? `${user.activityCount} activities` : `Level ${user.level}`;
+      default:
+        return `${user.xp.toLocaleString()} XP`;
+    }
+  };
+
+  const getMetricLabel = () => {
+    switch (activeTab) {
+      case 'xp':
+        return 'Experience Points';
+      case 'streak':
+        return 'Current Streak';
+      case 'activity':
+        return 'Recent Activities';
+      default:
+        return 'Experience Points';
+    }
+  };
   
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-background">
         <ActivityIndicator size="large" />
-        <Text className="mt-4 text-muted-foreground">Loading profile...</Text>
+        <Text className="mt-4 text-muted-foreground">Loading leaderboard...</Text>
       </View>
     );
   }
   
   return (
-    <ScrollView 
+    <ScrollView
       className="flex-1 bg-background"
       contentContainerStyle={{ paddingBottom: 120 }}
     >
-      {/* Profile Header */}
-      <View className="items-center pt-8 pb-6 gap-3 bg-card">
-        <View className="w-24 h-24 rounded-full overflow-hidden">
-          <Image 
-            source={{ uri: profileImage }}
-            className="w-full h-full"
-            accessibilityLabel="Profile picture"
-          />
+      {/* Header */}
+      <View className="items-center pt-8 pb-6 gap-3 bg-gradient-to-b from-primary/5 to-transparent">
+        <View className="w-16 h-16 rounded-full items-center justify-center bg-primary/10">
+          <TrophyIcon size={32} className="text-primary" />
         </View>
         <View className="items-center">
-          <Text className="text-lg font-semibold">{displayName}</Text>
-          <Text className="text-sm text-muted-foreground">{displayEmail}</Text>
-          {userInfo?.role && (
-            <Text className="text-xs text-primary mt-1">Role: {userInfo.role}</Text>
-          )}
+          <Text className="text-2xl font-bold">Global Leaderboard</Text>
+          <Text className="text-sm text-muted-foreground">Compete with learners worldwide</Text>
         </View>
       </View>
 
-      {/* Settings Menu */}
-      <View className="p-4 gap-4">
-        {/* Theme Toggle Card */}
-        <Card className="p-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3">
-              <View className="w-8 h-8 rounded-full items-center justify-center bg-primary/10">
-                <User size={18} className="text-primary" />
-              </View>
-              <View>
-                <Text className="font-medium">Theme</Text>
-                <Text className="text-sm text-muted-foreground">Change app appearance</Text>
-              </View>
-            </View>
-            <ThemeToggle />
+      {/* Tab Navigation */}
+      <View className="px-4 mb-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
+          <View className="flex-row gap-2">
+            {LEADERBOARD_TABS.map((tab) => (
+              <TouchableOpacity
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
+                className={`px-4 py-3 rounded-full flex-row items-center gap-2 ${
+                  activeTab === tab.key
+                    ? 'bg-primary'
+                    : 'bg-secondary/20'
+                }`}
+              >
+                <tab.icon
+                  size={16}
+                  className={activeTab === tab.key ? 'text-primary-foreground' : 'text-foreground'}
+                />
+                <Text
+                  className={`font-medium ${
+                    activeTab === tab.key ? 'text-primary-foreground' : 'text-foreground'
+                  }`}
+                >
+                  {tab.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </Card>
+        </ScrollView>
+      </View>
 
-        {/* Menu Items */}
-        <Card className="divide-y divide-border">
-          {MENU_ITEMS.map((item, index) => (
-            <View key={index} className="flex-row items-center justify-between p-4">
-              <View className="flex-row items-center gap-3">
-                <View className="w-8 h-8 rounded-full items-center justify-center bg-primary/10">
-                  <item.icon size={18} className="text-primary" />
-                </View>
-                <View>
-                  <Text className="font-medium">{item.title}</Text>
-                  <Text className="text-sm text-muted-foreground">{item.description}</Text>
-                </View>
+      {/* Current User Stats */}
+      {leaderboardData?.currentUser && activeTab !== 'feed' && (
+        <View className="px-4 mb-4">
+          <Card className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5">
+            <View className="flex-row items-center gap-3">
+              <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
+                <Text className="font-bold text-primary">#{leaderboardData.currentUser.rank}</Text>
               </View>
-              <ChevronRight size={20} className="text-muted-foreground" />
+              <View className="flex-1">
+                <Text className="font-semibold">Your Position</Text>
+                <Text className="text-sm text-muted-foreground">
+                  {getMetricValue(leaderboardData.currentUser)} • {getMetricLabel()}
+                </Text>
+              </View>
+              <View className="items-end">
+                <Text className="text-xs text-muted-foreground">Level</Text>
+                <Text className="font-bold text-lg">{leaderboardData.currentUser.level}</Text>
+              </View>
             </View>
-          ))}
-        </Card>
-        
-        {/* JWT Debug Section */}
-        <Card className="p-4">
-          <Text className="font-medium text-lg mb-3">🔍 JWT Debug Information</Text>
-          
-          {/* Decoded User Info */}
-          <View className="mb-4">
-            <Text className="font-medium text-primary mb-2">Decoded User Info:</Text>
-            <ScrollView horizontal={true}>
-              <Text className="text-xs font-mono bg-muted p-2 rounded">
-                {userInfo ? JSON.stringify(userInfo, null, 2) : 'No user info available'}
-              </Text>
-            </ScrollView>
+          </Card>
+        </View>
+      )}
+
+      {/* Content */}
+      {activeTab === 'feed' ? (
+        /* Activity Feed */
+        <ActivityLogViewer />
+      ) : (
+        /* Leaderboard */
+        <View className="px-4">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="font-semibold text-lg">Top Learners</Text>
+            <TouchableOpacity
+              onPress={() => fetchLeaderboardData(activeTab)}
+              disabled={refreshing}
+              className="p-2 rounded-lg bg-secondary/20"
+            >
+              {refreshing ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <TrendingUpIcon size={16} className="text-foreground" />
+              )}
+            </TouchableOpacity>
           </View>
-          
-          {/* Raw Token */}
-          <View className="mb-4">
-            <Text className="font-medium text-primary mb-2">Raw Token:</Text>
-            <ScrollView horizontal={true}>
-              <Text className="text-xs font-mono bg-muted p-2 rounded">
-                {rawToken ? rawToken.substring(0, 100) + '...' : 'No token available'}
-              </Text>
-            </ScrollView>
-          </View>
-          
-          {/* Token Type */}
-          <View className="mb-4">
-            <Text className="font-medium text-primary mb-2">Token Type:</Text>
-            <Text className="text-sm">
-              {rawToken?.startsWith('{') ? '📄 Session Token (JSON)' : 
-               rawToken?.split('.').length === 3 ? '🔐 JWT Token' : 
-               '❓ Unknown Token Format'}
-            </Text>
-          </View>
-          
-          {/* All User Properties */}
-          {userInfo && (
-            <View>
-              <Text className="font-medium text-primary mb-2">All User Properties:</Text>
-              {Object.entries(userInfo).map(([key, value]) => (
-                <View key={key} className="flex-row mb-1">
-                  <Text className="font-medium text-xs w-20">{key}:</Text>
-                  <Text className="text-xs flex-1">{String(value)}</Text>
+
+          <Card className="divide-y divide-border">
+            {leaderboardData?.users.map((user, index) => {
+              const rankInfo = getRankIcon(user.rank);
+              const badgeColor = getRankBadgeColor(user.rank);
+              
+              return (
+                <View key={user.id} className="p-4 flex-row items-center gap-3">
+                  {/* Rank */}
+                  <View className={`w-8 h-8 rounded-full items-center justify-center ${badgeColor}`}>
+                    {user.rank <= 3 ? (
+                      <rankInfo.icon size={16} className="text-white" />
+                    ) : (
+                      <Text className="text-white font-bold text-sm">#{user.rank}</Text>
+                    )}
+                  </View>
+
+                  {/* Avatar */}
+                  <View className="w-10 h-10 rounded-full overflow-hidden bg-secondary">
+                    {user.image ? (
+                      <Image source={{ uri: user.image }} className="w-full h-full" />
+                    ) : (
+                      <View className="w-full h-full items-center justify-center bg-primary/10">
+                        <UsersIcon size={16} className="text-primary" />
+                      </View>
+                    )}
+                  </View>
+
+                  {/* User Info */}
+                  <View className="flex-1">
+                    <Text className="font-medium">{user.name}</Text>
+                    <Text className="text-xs text-muted-foreground">
+                      Level {user.level} • {getMetricValue(user)}
+                    </Text>
+                  </View>
+
+                  {/* Stats */}
+                  <View className="items-end">
+                    <Text className="font-bold text-primary">{getMetricValue(user)}</Text>
+                    {activeTab === 'streak' && (
+                      <Text className="text-xs text-muted-foreground">
+                        Max: {user.maxStreak}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-              ))}
+              );
+            })}
+          </Card>
+
+          {/* Footer Stats */}
+          {leaderboardData && (
+            <View className="mt-4 p-4 bg-secondary/10 rounded-lg">
+              <Text className="text-center text-sm text-muted-foreground">
+                🌟 {leaderboardData.totalUsers} learners competing globally
+              </Text>
             </View>
           )}
-        </Card>
-
-        {/* Logout Button */}
-        <Button 
-          variant="destructive" 
-          className="mt-4"
-          onPress={handleLogout}
-        >
-          <View className="flex-row items-center justify-center">
-            <LogOut size={18} className="mr-2 text-destructive-foreground" />
-            <Text className="text-destructive-foreground font-medium">Logout</Text>
-          </View>
-        </Button>
-      </View>
+        </View>
+      )}
     </ScrollView>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TouchableOpacity, Alert, Animated, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Alert, Animated, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -26,8 +26,6 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
   const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
   const scrollY = new Animated.Value(0);
-  const INITIAL_CONTENT_SCALE = 0.90; // Content is initially scaled down
-  const scaleAnim = new Animated.Value(INITIAL_CONTENT_SCALE);
   const moduleListRef = useRef<ModuleListRef>(null);
   const { colorScheme } = useColorScheme();
   
@@ -85,30 +83,8 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
   };
 
   const handleOpenModuleList = () => {
-    // The scaling will now be driven by handleSheetHeightChange as the module list opens.
     moduleListRef.current?.open();
   };
-
-  const handleModuleListOpenChange = (isOpen: boolean) => {
-    // Only animate scale back when closing
-    if (!isOpen) {
-      Animated.timing(scaleAnim, {
-        toValue: INITIAL_CONTENT_SCALE, // Animate back to initial scaled-down state
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  };
-
-  const handleSheetHeightChange = (heightPercentage: number) => {
-    // Content scales UP as the sheet opens, from INITIAL_CONTENT_SCALE to 1.0
-    const targetScale = INITIAL_CONTENT_SCALE + (heightPercentage * (1.0 - INITIAL_CONTENT_SCALE));
-    
-    // Set value directly for instant response - no animation delay
-    scaleAnim.setValue(targetScale);
-  };
-
-
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'BEGINNER':
@@ -138,19 +114,16 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
     extrapolate: 'clamp',
   });
 
-
-
+  // For bounce effect on over-scroll
+  const imageScale = scrollY.interpolate({
+    inputRange: [-100, 0],
+    outputRange: [1.2, 1],
+    extrapolate: 'clamp',
+  });
   return (
     <View className="flex-1">
-      <Animated.View 
-        className="flex-1 overflow-hidden"
-        style={{
-          transform: [{ scale: scaleAnim }],
-          borderRadius: 42,
-        }}
-      >
       {/* Fixed Parallax Header */}
-      <Animated.View 
+      <Animated.View
         className="absolute top-0 left-0 right-0 z-0"
         style={{
           height: HEADER_HEIGHT,
@@ -158,15 +131,20 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
         }}
       >
         {course.thumbnail ? (
-          <>
-            <Animated.Image
+          <Animated.View
+            className="w-full h-full"
+            style={{
+              opacity: imageOpacity,
+              transform: [{ scale: imageScale }]
+            }}
+          >
+            <Image
               source={{ uri: course.thumbnail }}
               className="w-full h-full"
               resizeMode="cover"
-              style={{ opacity: imageOpacity }}
             />
             <LinearGradient
-              colors={['transparent', backgroundColor]} 
+              colors={['transparent', backgroundColor]}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -176,11 +154,14 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
               }}
               locations={[0.2, 1]}
             />
-          </>
+          </Animated.View>
         ) : (
-          <Animated.View 
+          <Animated.View
             className="w-full h-full bg-muted items-center justify-center"
-            style={{ opacity: imageOpacity }}
+            style={{
+              opacity: imageOpacity,
+              transform: [{ scale: imageScale }]
+            }}
           >
             <Text className="text-muted-foreground">No image available</Text>
           </Animated.View>
@@ -197,8 +178,8 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
           { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
+        bounces={true}
       >
-
         {/* Course Header Info */}
         <View className="p-4 gap-4 bg-background rounded-t-3xl">
         <View className="gap-2">
@@ -244,15 +225,15 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
                 {/* View Modules Button - 70% */}
                 <TouchableOpacity
                   onPress={handleOpenModuleList}
-                  className="flex-1 py-4 px-4 rounded-xl bg-primary"
+                  className="flex-1 py-3 px-4 rounded-lg bg-primary"
                   style={{ flex: 0.9 }}
                 >
-                  <View className="flex-row items-center justify-center gap-3">
+                  <View className="flex-row items-center justify-center gap-2">
                     {(() => {
                       const ListIcon = iconWithClassName(List);
-                      return <ListIcon size={20} className="text-primary-foreground" />;
+                      return <ListIcon size={18} className="text-primary-foreground" />;
                     })()}
-                    <Text className="text-primary-foreground font-semibold text-base">
+                    <Text className="text-primary-foreground font-medium text-sm">
                       Lihat module
                     </Text>
                   </View>
@@ -262,7 +243,7 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
                 <TouchableOpacity
                   onPress={handleJoinLeave}
                   disabled={leaveMutation.isPending}
-                  className={`py-4 px-4 rounded-xl border border-destructive items-center justify-center ${
+                  className={`py-3 px-3 rounded-lg border border-destructive items-center justify-center ${
                     leaveMutation.isPending ? 'opacity-50' : ''
                   }`}
                   style={{ flex: 0.1 }}
@@ -272,7 +253,7 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
                   ) : (
                     (() => {
                       const LogOutIcon = iconWithClassName(LogOut);
-                      return <LogOutIcon size={20} className="text-destructive" />;
+                      return <LogOutIcon size={18} className="text-destructive" />;
                     })()
                   )}
                 </TouchableOpacity>
@@ -282,11 +263,11 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
               <TouchableOpacity
                 onPress={handleJoinLeave}
                 disabled={leaveMutation.isPending}
-                className={`py-3 px-6 rounded-xl border border-destructive ${
+                className={`py-2.5 px-4 rounded-lg border border-destructive ${
                   leaveMutation.isPending ? 'opacity-50' : ''
                 }`}
               >
-                <Text className="text-center font-medium text-destructive">
+                <Text className="text-center font-medium text-sm text-destructive">
                   {leaveMutation.isPending ? 'Processing...' : 'Leave Course'}
                 </Text>
               </TouchableOpacity>
@@ -296,11 +277,11 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
             <TouchableOpacity
               onPress={handleJoinLeave}
               disabled={joinMutation.isPending}
-              className={`py-4 px-6 rounded-xl bg-primary ${
+              className={`py-3 px-4 rounded-lg bg-primary ${
                 joinMutation.isPending ? 'opacity-50' : ''
               }`}
             >
-              <Text className="text-center font-semibold text-base text-primary-foreground">
+              <Text className="text-center font-medium text-sm text-primary-foreground">
                 {joinMutation.isPending ? 'Joining...' : 'Join Course'}
               </Text>
             </TouchableOpacity>
@@ -319,17 +300,13 @@ export function CourseDetail({ course, onRefresh }: CourseDetailProps) {
           </Card>
         )}
       </Animated.ScrollView>
-
-      </Animated.View>
       
-      {/* Module List Bottom Sheet - Outside scaled container */}
+      {/* Module List Bottom Sheet */}
       <ModuleList
         ref={moduleListRef}
         modules={course.modules || []}
         onModuleSelect={handleModuleSelect}
         courseTitle={course.title}
-        onOpenChange={handleModuleListOpenChange}
-        onSheetHeightChange={handleSheetHeightChange}
       />
     </View>
   );

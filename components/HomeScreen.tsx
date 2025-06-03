@@ -6,12 +6,20 @@ import { AppList } from '~/components/AppList';
 import { Articles } from '~/components/Articles';
 import { RecentVocabulary } from '~/components/RecentVocabulary';
 import { getCurrentUser, type UserInfo } from '~/lib/auth';
+import { StreakDisplay } from '~/components/StreakDisplay';
+import { useStreak } from '~/lib/hooks/useStreak';
 import { Header } from '~/components/Header'; // Import the new Header component
+import { ProfileModal } from '~/components/ProfileModal'; // Import the ProfileModal component
 
 // Define the HomeScreen component
 export function HomeScreen() {
+  // Initialize streak tracking (handles daily login automatically)
+  const streakHook = useStreak();
+  
   // State to store user information
   const [user, setUser] = useState<UserInfo | null>(null);
+  // State for profile modal
+  const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   // Animated value for scroll position
   const scrollY = useRef(new Animated.Value(0)).current;
   // Ref to store the previous scroll position
@@ -47,6 +55,15 @@ export function HomeScreen() {
   // Determine the display name based on user data
   const displayName = user?.name || 'Guest';
 
+  // Profile modal handlers
+  const handleProfilePress = () => {
+    setIsProfileModalVisible(true);
+  };
+
+  const handleProfileModalClose = () => {
+    setIsProfileModalVisible(false);
+  };
+
   // Return the JSX for the HomeScreen
   return (
     // SafeAreaView to ensure content is within safe screen boundaries
@@ -58,6 +75,8 @@ export function HomeScreen() {
           displayName={displayName}
           headerTranslateYAnim={headerTranslateYAnim}
           HEADER_HEIGHT={HEADER_HEIGHT}
+          userPhotoUrl={user?.image}
+          onProfilePress={handleProfilePress}
         />
 
       {/* Scrollable content area */}
@@ -117,15 +136,26 @@ export function HomeScreen() {
         {/* Main content container */}
         {/* Added px-6 here from original ScrollView */}
         <View className="mx-auto w-full max-w-lg flex gap-6 pb-[120px] px-6">
+          {/* Streak Display - shows daily streak, XP, and level */}
+          <StreakDisplay variant="calendar" />
+          
           {/* AppList component to display a list of apps */}
           <AppList />
+          
           {/* RecentVocabulary component to display recent vocabulary */}
           <RecentVocabulary />
+          
           {/* Articles component to display articles */}
           <Articles />
         </View>
       </Animated.ScrollView>
       </View>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isVisible={isProfileModalVisible}
+        onClose={handleProfileModalClose}
+      />
     </SafeAreaView>
   );
 }
