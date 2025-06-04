@@ -14,7 +14,7 @@ const discovery = {
   revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
 };
 
-const GOOGLE_CLIENT_ID = '1085407842332-qaupcjrih32ep700c0jiv00o83tjm9uq.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '1085407842332-6jt7i5cn8scfc5bc2emb1juaqh6uv5ol.apps.googleusercontent.com';
 
 export const useGoogleAuth = () => {
   const router = useRouter();
@@ -25,12 +25,14 @@ export const useGoogleAuth = () => {
       clientId: GOOGLE_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
       redirectUri: makeRedirectUri({
-        scheme: 'myapp',
+        scheme: 'com.rorez.pejuangkorea',
+        path: 'redirect',
       }),
       responseType: 'id_token',
       extraParams: {
         nonce: 'nonce',
       },
+      usePKCE: false, // Disable PKCE for implicit flow
     },
     discovery
   );
