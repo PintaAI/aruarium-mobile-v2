@@ -9,6 +9,7 @@ import { Card } from '~/components/ui/card';
 import { login } from '~/lib/auth';
 import { Mail, Lock, Eye, EyeOff, Sparkles, Shield, ArrowRight } from 'lucide-react-native';
 import { iconWithClassName } from '~/lib/icons/iconWithClassName';
+import { useGoogleAuth } from '~/lib/hooks/useGoogleAuth';
 
 // Create styled icons
 const MailIcon = iconWithClassName(Mail);
@@ -21,6 +22,7 @@ const ArrowRightIcon = iconWithClassName(ArrowRight);
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -187,6 +189,31 @@ export default function LoginScreen() {
                     <>
                       <Text className="text-primary font-semibold text-lg">Sign In</Text>
                       <ArrowRightIcon size={20} className="text-primary" />
+                    </>
+                  )}
+                </View>
+              </Button>
+
+              {/* Divider */}
+              <View className="flex-row items-center mt-6 gap-4">
+                <View className="flex-1 h-px bg-gray-300" />
+                <Text className="text-gray-500 text-sm">or</Text>
+                <View className="flex-1 h-px bg-gray-300" />
+              </View>
+
+              {/* Google Sign-In Button */}
+              <Button 
+                onPress={signInWithGoogle} 
+                disabled={isGoogleLoading}
+                className="bg-white border border-gray-300 py-4 rounded-2xl mt-4"
+              >
+                <View className="flex-row items-center justify-center gap-3">
+                  {isGoogleLoading ? (
+                    <ActivityIndicator size="small" color="#4285F4" />
+                  ) : (
+                    <>
+                      <Text className="text-lg">🔍</Text>
+                      <Text className="text-gray-700 font-semibold text-lg">Continue with Google</Text>
                     </>
                   )}
                 </View>
