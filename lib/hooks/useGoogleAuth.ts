@@ -20,65 +20,103 @@ export const useGoogleAuth = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [request, response, promptAsync] = useAuthRequest(
+  // Use the custom scheme from app.json
+  const redirectUri = makeRedirectUri({
+    scheme: 'com.googleusercontent.apps.1085407842332-6jt7i5cn8scfc5bc2emb1juaqh6uv5ol',
+    path: 'oauth2redirect/google',
+  });
+
+  console.log('🔧 Google Auth Config:', {
+    clientId: GOOGLE_CLIENT_ID,
+    redirectUri,
+    scopes: ['openid', 'profile', 'email'],
+  });
+
+  const [, response, promptAsync] = useAuthRequest(
     {
       clientId: GOOGLE_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
-      redirectUri: makeRedirectUri({
-        scheme: 'com.rorez.pejuangkorea',
-        path: 'redirect',
-      }),
-      responseType: 'id_token',
-      extraParams: {
-        nonce: 'nonce',
-      },
-      usePKCE: false, // Disable PKCE for implicit flow
+      redirectUri,
+      responseType: 'code', // Use authorization code flow instead of implicit
+      usePKCE: true, // Enable PKCE for better security
     },
     discovery
   );
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log('🚀 Starting Google Sign-In with expo-auth-session...');
       setIsLoading(true);
+      
+      console.log('📱 Prompting user for authentication...');
       const result = await promptAsync();
       
+      console.log('📋 Auth result:', {
+        type: result?.type,
+        hasParams: !!(result as any)?.params,
+        paramsKeys: (result as any)?.params ? Object.keys((result as any).params) : [],
+      });
+      
       if (result?.type === 'success') {
-        const { id_token } = result.params;
+        console.log('✅ Authentication successful');
+        const { code } = (result as any).params;
         
-        if (id_token) {
-          // Send the ID token to your backend
+        if (code) {
+          console.log('🎫 Authorization code received, length:', code.length);
+          
+          // Send the authorization code to your backend
+          console.log('🌐 Sending code to backend...');
           const response = await fetch('https://pejuangkorea.vercel.app/api/mobile/auth/callback/google', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              idToken: id_token,
+              code: code,
+              redirectUri: redirectUri,
             }),
           });
 
+          console.log('📡 Backend response status:', response.status);
           const data = await response.json();
+          console.log('📄 Backend response data:', {
+            success: data.success,
+            hasToken: !!data.token,
+            hasUser: !!data.user,
+            error: data.error,
+          });
 
           if (data.success && data.token) {
-            // Store the JWT token securely
-            await SecureStore.setItemAsync('authToken', data.token);
+            console.log('💾 Storing tokens securely...');
+            // Store the JWT token securely (using the same key as lib/auth.ts)
+            await SecureStore.setItemAsync('auth_token', data.token);
             await SecureStore.setItemAsync('userData', JSON.stringify(data.user));
             
+            console.log('🏠 Navigating to home screen...');
             // Navigate to home screen
             router.replace('/home');
           } else {
+            console.error('❌ Login failed:', data.error);
             Alert.alert('Login Failed', data.error || 'Authentication failed');
           }
+        } else {
+          console.error('❌ No authorization code received');
+          Alert.alert('Error', 'No authorization code received');
         }
       } else if (result?.type === 'error') {
-        Alert.alert('Error', 'Authentication failed');
+        console.error('❌ Authentication error:', result.error);
+        Alert.alert('Error', `Authentication failed: ${result.error?.message || 'Unknown error'}`);
+      } else if (result?.type === 'cancel') {
+        console.log('🚫 User cancelled authentication');
+      } else {
+        console.log('ℹ️ Unexpected result type:', result?.type);
       }
-      // result.type === 'cancel' - User cancelled, do nothing
     } catch (error) {
-      console.error('Google Sign-In error:', error);
-      Alert.alert('Error', 'An unexpected error occurred');
+      console.error('💥 Google Sign-In error:', error);
+      Alert.alert('Error', `An unexpected error occurred: ${(error as Error).message || error}`);
     } finally {
       setIsLoading(false);
+      console.log('🏁 Google Sign-In process completed');
     }
   };
 

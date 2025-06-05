@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.rorez.pejuangkorea",
+    "scheme": "com.googleusercontent.apps.1085407842332-6jt7i5cn8scfc5bc2emb1juaqh6uv5ol",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -44,6 +44,10 @@
       "router": {},
       "eas": {
         "projectId": "8c350b18-268a-4dc5-8644-635f1481f52f"
+      },
+      "googleOAuth": {
+        "clientId": "1085407842332-6jt7i5cn8scfc5bc2emb1juaqh6uv5ol.apps.googleusercontent.com",
+        "redirectScheme": "com.googleusercontent.apps.1085407842332-6jt7i5cn8scfc5bc2emb1juaqh6uv5ol"
       }
     },
     "runtimeVersion": "1.0.0",
